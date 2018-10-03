@@ -1,0 +1,250 @@
+import random
+import datetime
+import time
+from subprocess import check_output, PIPE, Popen
+import subprocess
+import shlex
+import threading
+import os
+
+import sys
+from twisted.python import log
+from twisted.internet import reactor, protocol
+from twisted.internet.protocol import ServerFactory, ClientFactory, Protocol
+
+import Gateway as gt
+import Client as cl
+import MessageServerProtocol as server
+import MessageClientProtocol as client
+import PingTool as pt
+import NeighbourManager as neighbour
+
+class ClientManager():    
+    client = None
+    ping = pt.PingTool()
+    neighbourManager = None
+    
+    gateways = []
+    gatewayTable = []
+    actualGateways = []
+    updatedGateways = []
+    round = 0
+    connectRound = 0
+    clientCount = 0
+    proxyCount = 0
+    receivedCount = 0
+    rttLimit = 8
+    
+    
+    # Used for connection section
+    connectTime = None
+    connectTimeRandom = None
+    defaultGateway = None
+    defaultGatewayRandom = None
+    
+
+    def __init__(self, client, neighbours, gateways):
+        self.client = client
+        self.gateways = gateways
+        self.ping = pt.PingTool()
+        self.neighbourManager = neighbour.NeighbourManager(self, neighbours)
+	for gw in self.gateways:
+	    gw.sender = self.client
+    
+    def addGateway(self, gateway):
+        self.gateways.append(gateway)
+    
+    def removeGateway(self, gateway):
+        for gw in self.gateways:
+            if gw.address == gateway.address:
+                self.gateways.remove(gw)
+
+    def getRecentGateways(self):
+	return [x for x in self.gatewayTable if x.status == True and (datetime.datetime.now() - x.ts).seconds <= self.client.senseLatency]
+
+    def getRecentGatewaysOwn(self):
+        return [x for x in self.gatewayTable if x.status == True and (datetime.datetime.now() - x.ts).seconds <= self.client.senseLatency and x.sender.address == self.client.address]
+
+    def checkGatewayExists(self, gateway):
+        for gw in self.gateways:
+            if gw.address == gateway.address:
+                return True
+        return False
+
+    #Selects the best gw from the last measurement period 
+    def selectBestGateway(self):
+        best = None
+        for gw in self.getRecentGateways():  
+            if best == None:
+                best = gw
+            if  best.latency > gw.latency:
+                best = gw
+        return best
+
+    #SAMPLE 2 RANDOM GATEWAYS
+    def select2Random(self):
+        status = True
+        if len(self.gateways)>2:               
+            return random.sample(set(self.gateways), 2)
+        else:
+            return self.gateways
+
+
+    def senseGateways(self):
+        self.round +=1
+        threading.Timer(self.client.senseLatency, self.senseGateways).start()
+        status = False
+	gws = self.select2Random()
+	for gw in gws:
+            status = self.ping.pingGateway(gw) 
+            if status == 0:
+		self.removeGateway(gw)
+	    else:
+	        gw.actualLatency = gw.latency 
+            	self.setCategory(gw)
+		self.gatewayTable.append(gw)
+        
+	self.neighbourManager.sendNeighbour(gws)
+
+    def senseAllGateways(self):
+        #self.round +=1
+        threading.Timer(self.client.senseLatency, self.senseAllGateways).start()
+        
+        for gw in self.actualGateways:
+            status = self.ping.pingGateway(gw) 
+            if status == 0:
+                self.removeGateway(gw)
+            else:
+                self.setCategory(gw)
+                
+        self.gateways.sort(key=lambda x: (x.latency, x.ts), reverse=False)
+        self.printSelectedGateway()
+        
+        
+    def printSelectedGateway(self):
+        gw = [x for x in self.gateways if x.address == '10.139.40.122']
+        with open('selected_gw','a') as f:
+            f.write("{0},{1},{2}\n".format(datetime.datetime.now(), gw[0].latency, gw[0].actualLatency))
+        
+    def printSimilarity(self):
+        
+        total = 0
+        count1 = 0
+        recent = self.getRecentGateways()
+        print("=======================SIMILARITY MEASUREMENT================")
+        print([x.address for x in recent])
+        for gw in recent:
+            if gw.latency > gw.actualLatency:
+                total += float(gw.actualLatency/gw.latency)
+            else:
+                total += float(gw.latency/gw.actualLatency)
+            print(gw.address,':',gw.latency,":",gw.actualLatency,":", gw.ts)
+        print('Total recent measurement sim:',':',float(total/len(recent)))
+	recent_good = [x for x in recent if x.status == True]
+        with open('similar_measure','a') as f:
+                f.write("{0},{1},{2},{3}\n".format(datetime.datetime.now(),total/len(recent),len(recent_good), len(recent)))
+
+
+    def setCategory(self, gw):
+        if gw.latency < 0.3:
+            gw.status = True
+        else:
+            gw.status = False
+        #print(gw.address,";", gw.status,";",gw.latency)
+            
+    def selectRandomBest(self):
+        good_gws = self.getRecentGateways()
+        print("Best random:", [x.address for x in good_gws])
+        choice = random.choice(list(good_gws))
+        print("Best random choice:", choice.address)
+        return choice
+
+    def isDefaultRandomGood(self):
+	for gw in self.getRecentGateways():
+	    if gw.address == self.defaultGatewayRandom.address:
+		return True
+	return False
+
+    def connectRandom(self):
+        print("Connecting collab random")
+        threading.Timer(60.0, self.connectRandom).start()
+	gatewayCandidates = self.getRecentGateways()
+        if len(gatewayCandidates) == 0:
+            return
+        
+        while True:
+            if self.defaultGatewayRandom == None:
+                self.defaultGatewayRandom = self.selectRandomBest()
+                self.connectTimeRandom = datetime.datetime.now()
+
+	    if self.isDefaultRandomGood() == False:
+#		r
+#            if (datetime.datetime.now() - self.connectTimeRandom).seconds >300:
+                self.connectTimeRandom = datetime.datetime.now()
+                self.defaultGatewayRandom = self.selectRandomBest()
+        
+
+            cmd='''curl -x '''+self.defaultGatewayRandom.address+''':3128 -U david.pinilla:"|Jn 5DJ\\7inbNniK|m@^ja&>C" -m 180 -w %{time_starttransfer},%{time_total},%{http_code},%{size_download} http://ovh.net/files/10Mb.dat -o /dev/null -s'''
+            command = Popen(shlex.split(cmd),stdout=PIPE, stderr=PIPE)
+            stdout, stderr = command.communicate()
+            ttfb, lat, status,size = stdout.decode("utf-8").split(',')
+            if status !=0:                
+                with open('download_collab_random','a') as f:
+                    f.write("{0},{1},{2},{3},{4},{5}\n".format(datetime.datetime.now(), self.defaultGatewayRandom.address,float(ttfb),float(lat),int(status),int(size)))
+                    break
+            
+        
+    def connectBest(self):
+        print("Connecting collab best")
+        threading.Timer(60.0, self.connectBest).start()
+        
+        if self.defaultGateway == None:
+            self.defaultGateway = self.selectBestGateway()
+            self.connectTime = datetime.datetime.now()
+        elif (datetime.datetime.now() - self.connectTime).seconds >=300:
+            self.connectTime = datetime.datetime.now()
+            self.defaultGateway = self.selectBestGateway()
+            
+        if self.defaultGateway == None:
+            return
+        
+
+        cmd='''curl -x '''+self.defaultGateway.address+''':3128 -U david.pinilla:"|Jn 5DJ\\7inbNniK|m@^ja&>C" -m 180 -w %{time_starttransfer},%{time_total},%{http_code},%{size_download} http://ovh.net/files/10Mb.dat -o /dev/null -s'''
+        command = Popen(shlex.split(cmd),stdout=PIPE, stderr=PIPE)
+        stdout, stderr = command.communicate()
+        ttfb, lat, status,size = stdout.decode("utf-8").split(',')
+        with open('download_collab_best','a') as f:
+            f.write("{0},{1},{2},{3},{4},{5}\n".format(datetime.datetime.now(), self.defaultGateway.address,float(ttfb),float(lat),int(status),int(size)))
+            
+    
+    def connectBruteForce(self):
+        print("Connecting Brute Force")
+        threading.Timer(300.0, self.connectBruteForce).start()
+        gwAddress = [x.address for x in self.gateways]
+        bestGW = None
+        for gw in gwAddress:
+            tempGW = gt.Gateway(gw, 0.5, datetime.datetime.strptime('2018-03-15 18:59:15', '%Y-%m-%d %H:%M:%S'), status = False)
+            status = self.ping.pingGateway(tempGW) 
+            if status != 0:
+                self.setCategory(tempGW)
+            if bestGW == None:
+                bestGW = tempGW
+            elif bestGW.latency > tempGW.latency:
+                bestGW = tempGW
+
+        if bestGW == None:
+            return
+        count = 0        
+        print("Best gw:", bestGW.address)
+        while count <5:
+            cmd='''curl -x '''+bestGW.address+''':3128 -U david.pinilla:"|Jn 5DJ\\7inbNniK|m@^ja&>C" -m 180 -w %{time_starttransfer},%{time_total},%{http_code},%{size_download} http://ovh.net/files/10Mb.dat -o /dev/null -s'''
+            command = Popen(shlex.split(cmd),stdout=PIPE, stderr=PIPE)
+            stdout, stderr = command.communicate()
+            ttfb, lat, status,size = stdout.decode("utf-8").split(',')
+            with open('download_brute_force','a') as f:
+                f.write("{0},{1},{2},{3},{4},{5}\n".format(datetime.datetime.now(),
+                                                       bestGW.address,float(ttfb),float(lat),int(status),int(size)))
+            time.sleep(60)
+            count +=1
+            
+
