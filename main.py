@@ -91,7 +91,7 @@ neighbour16 = cl.Client('10.139.40.216',[],[],None)
 
 listNbs = [ neighbour2, neighbour3, neighbour4, neighbour5, neighbour6, neighbour7, neighbour8, neighbour9, neighbour10, neighbour11, neighbour12, neighbour13, neighbour14, neighbour15, neighbour16]
 
-client4= cl.Client('10.228.207.65', listNbs, listGW, node7)
+client4= cl.Client('10.228.207.66', [neighbour1, neighbour7, neighbour8], listGW, node7)
 client4.senseLatency = 120
 client4.cManager.rttLimit = 10
 client4.cManager.actualGateways = listActual
@@ -117,10 +117,7 @@ reactor.callWhenRunning(client4.cManager.neighbourManager.askMeasurements)
 
 reactor.callLater(5, client4.cManager.senseGateways)
 reactor.callLater(5, client4.cManager.senseAllGateways)
-#reactor.callLater(5, client4.cManager.connectBest)
 reactor.callLater(5, client4.cManager.connectRandom)
-#reactor.callLater(5, client4.cManager.connectBruteForce)
-#reactor.callLater(5, client4.cManager.connectPowerTwo)
 
 reactor.run()
 

@@ -89,6 +89,13 @@ class ClientManager():
         else:
             return self.gateways
 
+    def isUnique(self, gw):
+	status = True
+	for gwTemp in self.gatewayTable:
+	    if(gwTemp == gw):
+		status = False
+		break
+	return status
 
     def senseGateways(self):
         self.round +=1
@@ -96,15 +103,21 @@ class ClientManager():
         status = False
 	gws = self.select2Random()
 	for gw in gws:
-            status = self.ping.pingGateway(gw) 
+            status = self.ping.pingGateway(gw)
             if status == 0:
 		self.removeGateway(gw)
 	    else:
-	        gw.actualLatency = gw.latency 
+	        gw.actualLatency = gw.latency
             	self.setCategory(gw)
-		self.gatewayTable.append(gw)
-        
+	        if(self.isUnique(gw)):
+                    self.gatewayTable.append(gw)
+	self.printGatewayTable()
 	self.neighbourManager.sendNeighbour(gws)
+	
+    def printGatewayTable(self):
+	gateways = self.getRecentGateways()
+	for gw in gateways:
+	   print(gw.ts,':',gw.address,':',gw.latency,':',gw.sender.address)
 
     def senseAllGateways(self):
         #self.round +=1
@@ -144,6 +157,12 @@ class ClientManager():
         with open('similar_measure','a') as f:
                 f.write("{0},{1},{2},{3}\n".format(datetime.datetime.now(),total/len(recent),len(recent_good), len(recent)))
 
+    def updateGateways(self, gateways):
+	print("Updating info:",len(gateways))
+	for gw in gateways:
+	    self.setCategory(gw)
+	    self.gatewayTable.append(gw)
+	self.printGatewayTable()
 
     def setCategory(self, gw):
         if gw.latency < 0.3:
@@ -171,25 +190,21 @@ class ClientManager():
 	gatewayCandidates = self.getRecentGateways()
         if len(gatewayCandidates) == 0:
             return
-        
         while True:
             if self.defaultGatewayRandom == None:
                 self.defaultGatewayRandom = self.selectRandomBest()
                 self.connectTimeRandom = datetime.datetime.now()
 
 	    if self.isDefaultRandomGood() == False:
-#		r
-#            if (datetime.datetime.now() - self.connectTimeRandom).seconds >300:
                 self.connectTimeRandom = datetime.datetime.now()
                 self.defaultGatewayRandom = self.selectRandomBest()
-        
 
             cmd='''curl -x '''+self.defaultGatewayRandom.address+''':3128 -U david.pinilla:"|Jn 5DJ\\7inbNniK|m@^ja&>C" -m 180 -w %{time_starttransfer},%{time_total},%{http_code},%{size_download} http://ovh.net/files/10Mb.dat -o /dev/null -s'''
             command = Popen(shlex.split(cmd),stdout=PIPE, stderr=PIPE)
             stdout, stderr = command.communicate()
             ttfb, lat, status,size = stdout.decode("utf-8").split(',')
             if status !=0:                
-                with open('download_collab_random','a') as f:
+                with open('download_result_collab_random','a') as f:
                     f.write("{0},{1},{2},{3},{4},{5}\n".format(datetime.datetime.now(), self.defaultGatewayRandom.address,float(ttfb),float(lat),int(status),int(size)))
                     break
             

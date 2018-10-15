@@ -13,7 +13,7 @@ class PingTool():
     def pingGateway(self, gateway):
         status = True
         cmd='''curl -x '''+gateway.address+''':3128 -U david.pinilla:"|Jn 5DJ\\7inbNniK|m@^ja&>C" -m 180 -w %{time_total},%{http_code} http://ovh.net/files/1Mb.dat -o /dev/null -s'''
-        print('Sensing:',gateway.address)
+#        print('Sensing:',gateway.address)
         command = Popen(shlex.split(cmd),stdout=PIPE, stderr=PIPE)
         stdout, stderr = command.communicate()
         lat, status = stdout.decode("utf-8").split(',')
@@ -37,8 +37,8 @@ class PingTool():
     def getPingGateway(self, gateway):
         status = True
         cmd='''curl -x '''+gateway.address+''':3128 -U david.pinilla:"|Jn 5DJ\\7inbNniK|m@^ja&>C" -m 180 -w %{time_total},%{http_code} http://ovh.net/files/1Mb.dat -o /dev/null -s'''
-        print('Sensing:',gateway.address)
-	print(cmd)
+ #       print('Sensing:',gateway.address)
+#	print(cmd)
         command = Popen(shlex.split(cmd),stdout=PIPE, stderr=PIPE)
         stdout, stderr = command.communicate()
         lat, status = stdout.decode("utf-8").split(',')
