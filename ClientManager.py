@@ -170,12 +170,28 @@ class ClientManager():
         else:
             gw.status = False
         #print(gw.address,";", gw.status,";",gw.latency)
-            
+    candidates = []
     def selectRandomBest(self):
-        good_gws = self.getRecentGateways()
-        print("Best random:", set([x.address for x in good_gws]))
-	print("Best random list:", [x.address for x in good_gws])
-        choice = random.choice(list(set([x.address for x in good_gws])))
+	#Filtering last 2 measurement round results
+	gateway_candidates = [x for x in self.gatewayTable if x.status == True and (datetime.datetime.now() - x.ts).seconds <= self.client.senseLatency*2]
+	#Filtering unique gateways
+	addresses = list(set([x.address for x in gateway_candidates]))
+	for address in addresses:
+	    #Filtering only those gateway performances
+	    performances = [x for x in gateway_candidates if x.address == address]
+	    size = len(performances)
+	    i =1
+	    latency = 0
+	    for perf in performances:
+		latency += (perf.latency*i)/size
+		i+=1
+	    gw = gt.Gateway(perf.address, latency, datetime.datetime.now(), status = True, sender=None)
+	    self.candidates.append(gw)
+	    
+#        good_gws = self.getRecentGateways()
+#        print("Best random:", set([x.address for x in self.gcandidates))
+	print("Best random list:", [x.address for x in self.candidates])
+        choice = random.choice([x.address for x in candidates])
         print("Best random choice:", choice)
         return choice
 
