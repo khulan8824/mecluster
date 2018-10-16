@@ -173,14 +173,15 @@ class ClientManager():
             
     def selectRandomBest(self):
         good_gws = self.getRecentGateways()
-        print("Best random:", [x.address for x in good_gws])
-        choice = random.choice(list(good_gws))
-        print("Best random choice:", choice.address)
+        print("Best random:", set([x.address for x in good_gws]))
+	print("Best random list:", [x.address for x in good_gws])
+        choice = random.choice(list(set([x.address for x in good_gws])))
+        print("Best random choice:", choice)
         return choice
 
     def isDefaultRandomGood(self):
 	for gw in self.getRecentGateways():
-	    if gw.address == self.defaultGatewayRandom.address:
+	    if gw.address == self.defaultGatewayRandom:
 		return True
 	return False
 
@@ -199,13 +200,13 @@ class ClientManager():
                 self.connectTimeRandom = datetime.datetime.now()
                 self.defaultGatewayRandom = self.selectRandomBest()
 
-            cmd='''curl -x '''+self.defaultGatewayRandom.address+''':3128 -U david.pinilla:"|Jn 5DJ\\7inbNniK|m@^ja&>C" -m 180 -w %{time_starttransfer},%{time_total},%{http_code},%{size_download} http://ovh.net/files/10Mb.dat -o /dev/null -s'''
+            cmd='''curl -x '''+self.defaultGatewayRandom+''':3128 -U david.pinilla:"|Jn 5DJ\\7inbNniK|m@^ja&>C" -m 180 -w %{time_starttransfer},%{time_total},%{http_code},%{size_download} http://ovh.net/files/10Mb.dat -o /dev/null -s'''
             command = Popen(shlex.split(cmd),stdout=PIPE, stderr=PIPE)
             stdout, stderr = command.communicate()
             ttfb, lat, status,size = stdout.decode("utf-8").split(',')
             if status !=0:                
                 with open('download_result_collab_random','a') as f:
-                    f.write("{0},{1},{2},{3},{4},{5}\n".format(datetime.datetime.now(), self.defaultGatewayRandom.address,float(ttfb),float(lat),int(status),int(size)))
+                    f.write("{0},{1},{2},{3},{4},{5}\n".format(datetime.datetime.now(), self.defaultGatewayRandom,float(ttfb),float(lat),int(status),int(size)))
                     break
             
         
