@@ -111,7 +111,7 @@ class ClientManager():
             	self.setCategory(gw)
 	        if(self.isUnique(gw)):
                     self.gatewayTable.append(gw)
-	self.printGatewayTable()
+#	self.printGatewayTable()
 	self.neighbourManager.sendNeighbour(gws)
 	
     def printGatewayTable(self):
@@ -158,11 +158,11 @@ class ClientManager():
                 f.write("{0},{1},{2},{3}\n".format(datetime.datetime.now(),total/len(recent),len(recent_good), len(recent)))
 
     def updateGateways(self, gateways):
-	print("Updating info:",len(gateways))
+#	print("Updating info:",len(gateways))
 	for gw in gateways:
 	    self.setCategory(gw)
 	    self.gatewayTable.append(gw)
-	self.printGatewayTable()
+#	self.printGatewayTable()
 
     def setCategory(self, gw):
         if gw.latency < 0.3:
@@ -172,8 +172,10 @@ class ClientManager():
         #print(gw.address,";", gw.status,";",gw.latency)
     candidates = []
     def selectRandomBest(self):
+	self.candidates = [] #Emptying the candidate list first to update new info
+	performances = self.getRecentGateways()
 	#Filtering last 2 measurement round results
-	gateway_candidates = [x for x in self.gatewayTable if x.status == True and (datetime.datetime.now() - x.ts).seconds <= self.client.senseLatency*2]
+	gateway_candidates = [x for x in performances if x.status == True and (datetime.datetime.now() - x.ts).seconds <= self.client.senseLatency*2]
 	#Filtering unique gateways
 	addresses = list(set([x.address for x in gateway_candidates]))
 	for address in addresses:
@@ -189,9 +191,8 @@ class ClientManager():
 	    self.candidates.append(gw)
 	    
 #        good_gws = self.getRecentGateways()
-#        print("Best random:", set([x.address for x in self.gcandidates))
-	print("Best random list:", [x.address for x in self.candidates])
-        choice = random.choice([x.address for x in candidates])
+	print("Best random:", [[x.address, x.latency] for x in self.candidates])
+        choice = random.choice([x.address for x in self.candidates])
         print("Best random choice:", choice)
         return choice
 
@@ -202,7 +203,7 @@ class ClientManager():
 	return False
 
     def connectRandom(self):
-        print("Connecting collab random")
+#        print("Connecting collab random")
         threading.Timer(60.0, self.connectRandom).start()
 	gatewayCandidates = self.getRecentGateways()
         if len(gatewayCandidates) == 0:

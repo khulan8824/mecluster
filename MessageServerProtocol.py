@@ -21,7 +21,7 @@ class MessageServerProtocol(Protocol):
 
     # When receiving data from the client, it should update neighbour information
     def dataReceived(self,data):
-        print("DATA:", data)
+#        print("DATA:", data)
             
         connected = self.transport.getPeer().host
         
