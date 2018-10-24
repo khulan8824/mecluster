@@ -53,6 +53,8 @@ class NeighbourManager():
 
     def senseNeighbours(self):
         for nb in self.neighbours:            
+	    if self.cManager.client.address == nb.address:
+		continue
             rtt = self.cManager.ping.pingTest(nb.address) #CHANGE
             
             print(nb.address,":", rtt)            
