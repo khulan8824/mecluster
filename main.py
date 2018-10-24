@@ -68,30 +68,30 @@ listNbs = [neighbour1, neighbour2, neighbour3]
 
 neighbour1 = cl.Client('10.228.207.65',[],[],None)
 neighbour2 = cl.Client('10.228.207.66',[],[],None)
-neighbour3 = cl.Client('10.139.40.210',[],[],None)
-neighbour4 = cl.Client('10.228.207.26',[],[],None)
-neighbour5 = cl.Client('10.139.40.87',[],[],None)
-neighbour6 = cl.Client('10.228.207.16',[],[],None)
-neighbour7 = cl.Client('10.139.40.206',[],[],None)
-neighbour8 = cl.Client('10.139.40.207',[],[],None)
-neighbour9 = cl.Client('10.139.40.208',[],[],None)
-neighbour10 = cl.Client('10.228.207.24',[],[],None)
-neighbour11 = cl.Client('10.139.40.211',[],[],None)
-neighbour12 = cl.Client('10.139.40.212',[],[],None)
-neighbour13 = cl.Client('10.139.40.213',[],[],None)
-neighbour14 = cl.Client('10.139.40.214',[],[],None)
-neighbour15 = cl.Client('10.139.40.215',[],[],None)
-neighbour16 = cl.Client('10.139.40.216',[],[],None)
-#neighbour17 = cl.Client('10.139.40.214',[],[],None)
-#neighbour18 = cl.Client('10.139.40.215',[],[],None)
-#neighbour19 = cl.Client('10.139.40.216',[],[],None)
-#neighbour20 = cl.Client('10.139.40.217',[],[],None)
+neighbour3 = cl.Client('10.139.40.87',[],[],None)
+neighbour4 = cl.Client('10.228.207.25',[],[],None)
+neighbour5 = cl.Client('10.139.40.206',[],[],None)
+neighbour6 = cl.Client('10.139.40.207',[],[],None)
+neighbour7 = cl.Client('10.139.40.208',[],[],None)
+neighbour8 = cl.Client('10.139.40.210',[],[],None)
+neighbour9 = cl.Client('10.139.40.211',[],[],None)
+neighbour10 = cl.Client('10.139.40.212',[],[],None)
+neighbour11 = cl.Client('10.139.40.213',[],[],None)
+neighbour12 = cl.Client('10.139.40.214',[],[],None)
+neighbour13 = cl.Client('10.139.40.215',[],[],None)
+neighbour14 = cl.Client('10.139.40.216',[],[],None)
+neighbour15 = cl.Client('10.139.40.217',[],[],None)
+neighbour16 = cl.Client('10.139.40.218',[],[],None)
+neighbour17 = cl.Client('10.228.207.28',[],[],None)
+neighbour18 = cl.Client('10.228.207.27',[],[],None)
+neighbour19 = cl.Client('10.228.207.26',[],[],None)
+neighbour20 = cl.Client('10.139.40.219',[],[],None)
 #neighbour21 = cl.Client('10.139.40.218',[],[],None)
 #neighbour22 = cl.Client('10.139.40.219',[],[],None)
 
-listNbs = [ neighbour2, neighbour3, neighbour4, neighbour5, neighbour6, neighbour7, neighbour8, neighbour9, neighbour10, neighbour11, neighbour12, neighbour13, neighbour14, neighbour15, neighbour16]
+listNbs = [ neighbour1, neighbour2, neighbour3, neighbour4, neighbour5, neighbour6, neighbour7, neighbour8, neighbour9, neighbour10, neighbour11, neighbour12, neighbour13, neighbour14, neighbour15, neighbour16, neighbour17, neighbour18, neighbour19, neighbour20]
 
-client4= cl.Client('10.228.207.66', [neighbour1, neighbour7, neighbour8], listGW, node7)
+client4= cl.Client('10.228.207.65', listNbs, listGW, node7)
 client4.senseLatency = 120
 client4.cManager.rttLimit = 10
 client4.cManager.actualGateways = listActual
@@ -116,8 +116,8 @@ reactor.callWhenRunning(client4.cManager.neighbourManager.askMeasurements)
 #client4.cManager.connectBest()
 
 reactor.callLater(5, client4.cManager.senseGateways)
-reactor.callLater(5, client4.cManager.senseAllGateways)
-reactor.callLater(5, client4.cManager.connectRandom)
+#reactor.callLater(5, client4.cManager.senseAllGateways)
+#reactor.callLater(5, client4.cManager.connectRandom)
 
 reactor.run()
 
