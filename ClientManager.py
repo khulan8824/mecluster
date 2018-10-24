@@ -60,7 +60,7 @@ class ClientManager():
                 self.gateways.remove(gw)
 
     def getRecentGateways(self):
-	return [x for x in self.gatewayTable if x.status == True and (datetime.datetime.now() - x.ts).seconds <= self.client.senseLatency]
+	return [x for x in self.gatewayTable if (datetime.datetime.now() - x.ts).seconds <= (self.client.senseLatency+10)]
 
     def getRecentGatewaysOwn(self):
         return [x for x in self.gatewayTable if x.status == True and (datetime.datetime.now() - x.ts).seconds <= self.client.senseLatency and x.sender.address == self.client.address]
@@ -164,7 +164,7 @@ class ClientManager():
 	for gw in gateways:
 	    self.setCategory(gw)
 	    self.gatewayTable.append(gw)
-	    #print("Updating:", gw.address, ':', gw.latency, ':', gw.actualLatency, ':', gw.sender.address)
+	    print("Updating:", gw.address, ':', gw.latency, ':', gw.actualLatency, ':', gw.sender.address)
 #	self.printGatewayTable()
 
     def setCategory(self, gw):
@@ -178,14 +178,14 @@ class ClientManager():
 	candidates = [] #Emptying the candidate list first to update new info
         performances = self.getRecentGateways()
         #Filtering last 2 measurement round results
-        gateway_candidates = [x for x in performances if x.status == True and (datetime.datetime.now() - x.ts).seconds <= self.client.senseLatency*2]
+        gateway_candidates = [x for x in performances if (datetime.datetime.now() - x.ts).seconds <= (self.client.senseLatency*2+20)]
         #Filtering unique gateways
         addresses = list(set([x.address for x in gateway_candidates]))
         for address in addresses:
             #Filtering only those gateway performances
             performances = [x for x in gateway_candidates if x.address == address]
 	    performances.sort(key=lambda x: (x.ts), reverse=False)
-	    print(address, ':',[x.ts for x in performances])
+	    #print(address, ':',[[x.ts, x.latency] for x in performances])
             size = len(performances)
             i =1
             latency = 0
@@ -196,13 +196,14 @@ class ClientManager():
 		actualLatency = perf.actualLatency
             gw = gt.Gateway(perf.address, latency, datetime.datetime.now(), status = True, sender=None)
 	    gw.actualLatency = actualLatency
-	    print('MA:', gw.address, ':', gw.latency, ':', gw.actualLatency)
+	    self.setCategory(gw)
             candidates.append(gw)
 	return candidates
 
     #Select the random best from the smoothed performances.
     def selectRandomBest(self):
 	candidates = self.getLatestMovingAverage()
+	candidates = [x for x in candidates if x.status == True]
 	print("Best random:", [[x.address, x.latency] for x in candidates])
         choice = random.choice([x.address for x in candidates])
         print("Best random choice:", choice)
