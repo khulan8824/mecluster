@@ -26,6 +26,7 @@ class MessageServerProtocol(Protocol):
         connected = self.transport.getPeer().host
         
         if self.client is not None:
+	    #print('Received info from:', self.client.address)
             #If information received from the unlisted new close neighbour 
             #then add it to the close neighbouring list
             if self.client.cManager.neighbourManager.isNeighbourExists(connected) is False:

@@ -118,7 +118,7 @@ class ClientManager():
     def printGatewayTable(self):
 	gateways = self.getRecentGateways()
 	for gw in gateways:
-	   print(gw.ts,':',gw.address,':',gw.latency,':',gw.sender.address)
+	   print(gw.ts,':',gw.address,':',gw.latency,':',gw.actualLatency,':',gw.sender.address)
 
     def senseAllGateways(self):
         #self.round +=1
@@ -145,6 +145,7 @@ class ClientManager():
         total = 0
         count1 = 0
         recent = self.getLatestMovingAverage()
+	self.printGatewayTable()
         print("=======================SIMILARITY MEASUREMENT================")
         print([x.address for x in recent])
         for gw in recent:
@@ -163,6 +164,7 @@ class ClientManager():
 	for gw in gateways:
 	    self.setCategory(gw)
 	    self.gatewayTable.append(gw)
+	    #print("Updating:", gw.address, ':', gw.latency, ':', gw.actualLatency, ':', gw.sender.address)
 #	self.printGatewayTable()
 
     def setCategory(self, gw):
@@ -182,13 +184,19 @@ class ClientManager():
         for address in addresses:
             #Filtering only those gateway performances
             performances = [x for x in gateway_candidates if x.address == address]
+	    performances.sort(key=lambda x: (x.ts), reverse=False)
+	    print(address, ':',[x.ts for x in performances])
             size = len(performances)
             i =1
             latency = 0
+	    actualLatency = 0
             for perf in performances:
                 latency += (perf.latency*i)/size
                 i+=1
+		actualLatency = perf.actualLatency
             gw = gt.Gateway(perf.address, latency, datetime.datetime.now(), status = True, sender=None)
+	    gw.actualLatency = actualLatency
+	    print('MA:', gw.address, ':', gw.latency, ':', gw.actualLatency)
             candidates.append(gw)
 	return candidates
 
