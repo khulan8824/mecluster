@@ -113,6 +113,7 @@ class ClientManager():
                     self.gatewayTable.append(gw)
 #	self.printGatewayTable()
 	self.neighbourManager.sendNeighbour(gws)
+	self.printSimilarity()
 	
     def printGatewayTable(self):
 	gateways = self.getRecentGateways()
@@ -143,7 +144,7 @@ class ClientManager():
         
         total = 0
         count1 = 0
-        recent = self.getRecentGateways()
+        recent = self.getLatestMovingAverage()
         print("=======================SIMILARITY MEASUREMENT================")
         print([x.address for x in recent])
         for gw in recent:
@@ -154,7 +155,7 @@ class ClientManager():
             print(gw.address,':',gw.latency,":",gw.actualLatency,":", gw.ts)
         print('Total recent measurement sim:',':',float(total/len(recent)))
 	recent_good = [x for x in recent if x.status == True]
-        with open('similar_measure','a') as f:
+        with open('similar_measure5','a') as f:
                 f.write("{0},{1},{2},{3}\n".format(datetime.datetime.now(),total/len(recent),len(recent_good), len(recent)))
 
     def updateGateways(self, gateways):
@@ -170,29 +171,32 @@ class ClientManager():
         else:
             gw.status = False
         #print(gw.address,";", gw.status,";",gw.latency)
-    candidates = []
+
+    def getLatestMovingAverage(self):
+	candidates = [] #Emptying the candidate list first to update new info
+        performances = self.getRecentGateways()
+        #Filtering last 2 measurement round results
+        gateway_candidates = [x for x in performances if x.status == True and (datetime.datetime.now() - x.ts).seconds <= self.client.senseLatency*2]
+        #Filtering unique gateways
+        addresses = list(set([x.address for x in gateway_candidates]))
+        for address in addresses:
+            #Filtering only those gateway performances
+            performances = [x for x in gateway_candidates if x.address == address]
+            size = len(performances)
+            i =1
+            latency = 0
+            for perf in performances:
+                latency += (perf.latency*i)/size
+                i+=1
+            gw = gt.Gateway(perf.address, latency, datetime.datetime.now(), status = True, sender=None)
+            candidates.append(gw)
+	return candidates
+
+    #Select the random best from the smoothed performances.
     def selectRandomBest(self):
-	self.candidates = [] #Emptying the candidate list first to update new info
-	performances = self.getRecentGateways()
-	#Filtering last 2 measurement round results
-	gateway_candidates = [x for x in performances if x.status == True and (datetime.datetime.now() - x.ts).seconds <= self.client.senseLatency*2]
-	#Filtering unique gateways
-	addresses = list(set([x.address for x in gateway_candidates]))
-	for address in addresses:
-	    #Filtering only those gateway performances
-	    performances = [x for x in gateway_candidates if x.address == address]
-	    size = len(performances)
-	    i =1
-	    latency = 0
-	    for perf in performances:
-		latency += (perf.latency*i)/size
-		i+=1
-	    gw = gt.Gateway(perf.address, latency, datetime.datetime.now(), status = True, sender=None)
-	    self.candidates.append(gw)
-	    
-#        good_gws = self.getRecentGateways()
-	print("Best random:", [[x.address, x.latency] for x in self.candidates])
-        choice = random.choice([x.address for x in self.candidates])
+	candidates = self.getLatestMovingAverage()
+	print("Best random:", [[x.address, x.latency] for x in candidates])
+        choice = random.choice([x.address for x in candidates])
         print("Best random choice:", choice)
         return choice
 
@@ -222,7 +226,7 @@ class ClientManager():
             stdout, stderr = command.communicate()
             ttfb, lat, status,size = stdout.decode("utf-8").split(',')
             if status !=0:                
-                with open('download_result_collab_random','a') as f:
+                with open('download_result_collab_random5','a') as f:
                     f.write("{0},{1},{2},{3},{4},{5}\n".format(datetime.datetime.now(), self.defaultGatewayRandom,float(ttfb),float(lat),int(status),int(size)))
                     break
             
