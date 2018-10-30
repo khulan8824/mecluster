@@ -16,8 +16,8 @@ import Client as cl
 class MessageServerProtocol(Protocol):
     client = None
     
-    def connectionMade(self):
-        print('Server started running at: '+ self.transport.getPeer().host+'\n')
+#    def connectionMade(self):
+#        print('Server started running at: '+ self.transport.getPeer().host+'\n')
 
     # When receiving data from the client, it should update neighbour information
     def dataReceived(self,data):
@@ -64,8 +64,8 @@ class MessageServerProtocol(Protocol):
             status = False
             
         
-    def connectionLost(self, reason):
-        print("Connection lost:", self.transport.getPeer())
+#    def connectionLost(self, reason):
+#        print("Connection lost:", self.transport.getPeer())
         #with open('log','a') as f:  
         #    f.write(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")+', Server connection lost\n')
         #reactor.callFromThread(reactor.stop)

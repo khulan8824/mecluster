@@ -145,7 +145,7 @@ class ClientManager():
         total = 0
         count1 = 0
         recent = self.getLatestMovingAverage()
-	self.printGatewayTable()
+	#self.printGatewayTable()
         print("=======================SIMILARITY MEASUREMENT================")
         print([x.address for x in recent])
         for gw in recent:
@@ -156,7 +156,7 @@ class ClientManager():
             print(gw.address,':',gw.latency,":",gw.actualLatency,":", gw.ts)
         print('Total recent measurement sim:',':',float(total/len(recent)))
 	recent_good = [x for x in recent if x.status == True]
-        with open('similar_measure15','a') as f:
+        with open('similar_measure','a') as f:
                 f.write("{0},{1},{2},{3}\n".format(datetime.datetime.now(),total/len(recent),len(recent_good), len(recent)))
 
     def updateGateways(self, gateways):
@@ -164,7 +164,7 @@ class ClientManager():
 	for gw in gateways:
 	    self.setCategory(gw)
 	    self.gatewayTable.append(gw)
-	    print("Updating:", gw.address, ':', gw.latency, ':', gw.actualLatency, ':', gw.sender.address)
+	    #print("Updating:", gw.address, ':', gw.latency, ':', gw.actualLatency, ':', gw.sender.address)
 #	self.printGatewayTable()
 
     def setCategory(self, gw):
@@ -186,7 +186,7 @@ class ClientManager():
             #Filtering only those gateway performances
             performances = [x for x in gateway_candidates if x.address == address]
 	    performances.sort(key=lambda x: (x.ts), reverse=False)
-	    #print(address, ':',[[x.ts, x.latency] for x in performances])
+	    print(address, ':',[[x.latency] for x in performances])
             size = len(performances)
             i =1
             latency = 0
