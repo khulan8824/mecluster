@@ -144,10 +144,8 @@ class ClientManager():
         
         total = 0
         count1 = 0
-        recent = self.getLatestMovingAverage()
-	#self.printGatewayTable()
+        recent = self.getRecentGateways()
         print("=======================SIMILARITY MEASUREMENT================")
-        print([x.address for x in recent])
         for gw in recent:
             if gw.latency > gw.actualLatency:
                 total += float(gw.actualLatency/gw.latency)
