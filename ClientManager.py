@@ -164,7 +164,7 @@ class ClientManager():
 	for gw in gateways:
 	    self.setCategory(gw)
 	    self.gatewayTable.append(gw)
-	    print("Updating:", gw.address, ':', gw.latency, ':', gw.actualLatency, ':', gw.sender.address)
+	    print("Updating:", gw.address, ':', gw.latency, ':', gw.ts, ':', gw.sender.address)
 #	self.printGatewayTable()
 
     def setCategory(self, gw):
