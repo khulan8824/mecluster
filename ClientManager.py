@@ -164,7 +164,7 @@ class ClientManager():
 	for gw in gateways:
 	    self.setCategory(gw)
 	    self.gatewayTable.append(gw)
-	    #print("Updating:", gw.address, ':', gw.latency, ':', gw.actualLatency, ':', gw.sender.address)
+	    print("Updating:", gw.address, ':', gw.latency, ':', gw.actualLatency, ':', gw.sender.address)
 #	self.printGatewayTable()
 
     def setCategory(self, gw):
@@ -178,8 +178,10 @@ class ClientManager():
     def getLatestMovingAverage(self):
 	candidates = [] #Emptying the candidate list first to update new info
         performances = self.getRecentGateways()
+	performances_address = [x.address for x in performances]
+	print(performances_address)
         #Filtering last 2 measurement round results
-        gateway_candidates = [x for x in performances if (datetime.datetime.now() - x.ts).seconds <= (self.client.senseLatency*2+20)]
+        gateway_candidates = [x for x in self.gatewayTable if x.address in performances_address and (datetime.datetime.now() - x.ts).seconds <= (self.client.senseLatency*2+20)]
         #Filtering unique gateways
         addresses = list(set([x.address for x in gateway_candidates]))
         for address in addresses:
