@@ -123,18 +123,15 @@ class ClientManager():
     def senseAllGateways(self):
         #self.round +=1
         threading.Timer(self.client.senseLatency, self.senseAllGateways).start()
-        
-        for gw in self.actualGateways:
-            status = self.ping.pingGateway(gw) 
-            if status == 0:
-                self.removeGateway(gw)
-            else:
-                self.setCategory(gw)
-                
-        self.gateways.sort(key=lambda x: (x.latency, x.ts), reverse=False)
-        self.printSelectedGateway()
-        
-        
+        with open('gateways', 'a') as f:
+            for gw in self.actualGateways:
+            	status = self.ping.pingGateway(gw) 
+                if status == 0:
+                    self.removeGateway(gw)
+	        else:
+                    self.setCategory(gw)
+                f.write("{0},{1},{2}\n".format(datetime.datetime.now(), gw.address, gw.latency))
+
     def printSelectedGateway(self):
         gw = [x for x in self.gateways if x.address == '10.139.40.122']
         with open('selected_gw','a') as f:
