@@ -156,7 +156,7 @@ class ClientManager():
             print(gw.address,':',gw.latency,":",gw.actualLatency,":", gw.ts)
         print('Total recent measurement sim:',':',float(total/len(recent)))
 	recent_good = [x for x in recent if x.status == True]
-        with open('similar_measure15','a') as f:
+        with open('similar_measure20','a') as f:
                 f.write("{0},{1},{2},{3}\n".format(datetime.datetime.now(),total/len(recent),len(recent_good), len(recent)))
 
     def updateGateways(self, gateways):
