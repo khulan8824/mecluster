@@ -6,6 +6,7 @@ import subprocess
 import shlex
 import threading
 import os
+from math import *
 
 import sys
 from twisted.python import log
@@ -114,6 +115,7 @@ class ClientManager():
 #	self.printGatewayTable()
 	self.neighbourManager.sendNeighbour(gws)
 	self.printSimilarity()
+	self.printCosineSimilarity()
 	
     def printGatewayTable(self):
 	gateways = self.getRecentGateways()
@@ -156,8 +158,37 @@ class ClientManager():
             print(gw.address,':',gw.latency,":",gw.actualLatency,":", gw.ts)
         print('Total recent measurement sim:',':',float(total/len(recent)))
 	recent_good = [x for x in recent if x.status == True]
-        with open('similar_measure20','a') as f:
-                f.write("{0},{1},{2},{3}\n".format(datetime.datetime.now(),total/len(recent),len(recent_good), len(recent)))
+        with open('similar_measure','a') as f:
+	    f.write("{0},{1},{2},{3}\n".format(datetime.datetime.now(),total/len(recent),len(recent_good), len(recent)))
+
+    def square_rooted(self, x): 
+	return round(sqrt(sum([a*a for a in x])),3)
+
+    def cosine_similarity(self, x,y):
+	numerator = sum(a*b for a,b in zip(x,y))
+	denominator = self.square_rooted(x)*self.square_rooted(y)
+	return round(numerator/float(denominator),3)
+
+    def printCosineSimilarity(self):
+	total = 0
+        count1 = 0
+        recent = self.getLatestMovingAverage()
+        #self.printGatewayTable()
+        print("=======================COSINE SIMILARITY MEASUREMENT================")
+        print([x.address for x in recent])
+        m1 = []
+	m2 = []
+	for gw in recent:
+	    m1.append(gw.latency)
+	    m2.append(gw.actualLatency)
+#            print(gw.address,':',gw.latency,":",gw.actualLatency,":", gw.ts)
+	sim = float(self.cosine_similarity(m1,m2))
+        print('Total recent measurement sim:',':',sim)
+        recent_good = [x for x in recent if x.status == True]
+        with open('similar_cosine','a') as f:
+            f.write("{0},{1},{2},{3}\n".format(datetime.datetime.now(),sim,len(recent_good), len(recent_good)))
+
+
 
     def updateGateways(self, gateways):
 #	print("Updating info:",len(gateways))
