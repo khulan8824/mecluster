@@ -96,6 +96,7 @@ class NeighbourManager():
         text = self.sendInformation(False, gateways)
         self.cManager.updatedGateways = []
         for neighbour in self.closeNeighbours:
+	    print('Sending:',neighbour.address, ':', text)
             f = protocol.ClientFactory()
             f.protocol = client.MessageClientProtocol
             f.protocol.client = self.cManager.client
