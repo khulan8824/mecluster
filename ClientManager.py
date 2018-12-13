@@ -172,7 +172,8 @@ class ClientManager():
     def printCosineSimilarity(self):
 	total = 0
         count1 = 0
-        recent = self.getLatestMovingAverage()
+        #recent = self.getLatestMovingAverage()
+	recent = self.getRecentGateways()
         #self.printGatewayTable()
         print("=======================COSINE SIMILARITY MEASUREMENT================")
         print([x.address for x in recent])
