@@ -186,7 +186,7 @@ class ClientManager():
 	sim = float(self.cosine_similarity(m1,m2))
         print('Total recent measurement sim:',':',sim)
         recent_good = [x for x in recent if x.status == True]
-        with open('similar_cosine10','a') as f:
+        with open('similar_cosine15','a') as f:
             f.write("{0},{1},{2},{3}\n".format(datetime.datetime.now(),sim,len(recent_good), len(recent_good)))
 
 
