@@ -15,7 +15,6 @@ proxy.cecilia.guifi.net
 proxy.malla.guifi.net
 proxy.muntanyola.guifi.net
 proxy.smc.guifi.net
-http://proxy.quirze.guifi.net
 proxy.olost.guifi.net
 proxy.perafita.guifi.net
 proxy.sbll.guifi.net
